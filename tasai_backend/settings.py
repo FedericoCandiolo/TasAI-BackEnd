@@ -26,6 +26,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'api.Usuario' # Definicion del usuario personalizado
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -35,10 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
     'rest_framework',
-    'coreapi',
     'api',
-    'django.contrib.humanize'
+    'drf_yasg',
 
 ]
 
