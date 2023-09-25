@@ -2,6 +2,12 @@ from django.db import models
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.utils import timezone
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
 
 
 # Create your models here.

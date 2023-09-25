@@ -1,0 +1,6 @@
+pandas
+matplotlib
+scikit-learn
+standard-scaler
+random-forest-mc
+joblib
