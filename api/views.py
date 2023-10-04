@@ -32,7 +32,7 @@ class TasacionViewSet(viewsets.ModelViewSet):
 class ActualizarPlan(APIView):
     @staticmethod
     @swagger_auto_schema(request_body=IdPlanSerializer)
-    def put(request, user_id):
+    def patch(request, user_id):
         try:
             usuario = Usuario.objects.get(id=user_id)
             plan = Plan.objects.get(id=request.data.get('id_plan'))
@@ -43,6 +43,34 @@ class ActualizarPlan(APIView):
         except Usuario.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Plan.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class EstaGuardadoPropiedad(APIView):
+    @staticmethod
+    @swagger_auto_schema(request_body=IdPropiedadSerializer)
+    def patch(request, id_propiedad):
+        try:
+            propiedad = Propiedad.objects.get(id=id_propiedad)
+            esta_guardado = request.data.get('esta_guardado')
+            propiedad.esta_guardado = esta_guardado
+            propiedad.save()
+            return Response(status=status.HTTP_200_OK)
+        except Propiedad.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class EstaGuardadoTasacion(APIView):
+    @staticmethod
+    @swagger_auto_schema(request_body=IdTasacionSerializer)
+    def patch(request, id_tasacion):
+        try:
+            tasacion = Tasacion.objects.get(id=id_tasacion)
+            esta_guardado = request.data.get('esta_guardado')
+            tasacion.esta_guardado = esta_guardado
+            tasacion.save()
+            return Response(status=status.HTTP_200_OK)
+        except Propiedad.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
@@ -141,8 +169,12 @@ class RegistroUsuario(APIView):
     def post(request):
         serializer = RegistroUsuarioSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Registro exitoso'}, status=status.HTTP_201_CREATED)
+            usuario = serializer.save()
+            response_data = {
+                'message': 'Registro exitoso',
+                'user_id': usuario.id
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -154,7 +186,7 @@ class IniciarSesion(APIView):
         if serializer.is_valid():
             user = serializer.validated_data
             token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            return Response({'token': token.key, 'id_usuario': user.id}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

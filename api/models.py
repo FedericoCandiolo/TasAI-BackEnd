@@ -21,10 +21,7 @@ class Plan(models.Model):
 
 class Usuario(AbstractUser):
     id = models.Model.pk
-    nombre = models.CharField(max_length=50, null=True)
-    apellido = models.CharField(max_length=50, null=True)
-    apodo = models.CharField(max_length=30, null=True)
-    email = models.CharField(max_length=50, null=True, unique=True)
+    email = models.CharField(max_length=50, null=True)
     estado = models.BooleanField(default=True)  # Activado = 1, Bloqueado = 0
     id_plan = models.ForeignKey(Plan, on_delete=models.CASCADE, default=1)  # id_plan
     tasaciones_realizadas = models.IntegerField(default=0, validators=[MinValueValidator(limit_value=0),
@@ -55,11 +52,12 @@ class Propiedad(models.Model):
     pileta = models.BooleanField(default=False)
     parrilla = models.BooleanField(default=False)
     jardin = models.BooleanField(default=False)
-    latitud = models.DecimalField(max_digits=22, decimal_places=16, blank=True, null=True)
-    longitud = models.DecimalField(max_digits=22, decimal_places=16, blank=True, null=True)
+    latitud = models.DecimalField(max_digits=22, decimal_places=16, null=True)
+    longitud = models.DecimalField(max_digits=22, decimal_places=16, null=True)
+    esta_guardado = models.BooleanField(default=False)
 
-    class Meta:
-        unique_together = ('id_usuario', 'calle', 'numero')
+    # class Meta:
+    #     unique_together = ('id_usuario', 'calle', 'numero')
 
 
 class Tasacion(models.Model):
@@ -69,3 +67,4 @@ class Tasacion(models.Model):
     fecha_tasacion = models.DateTimeField(default=datetime.now())
     precio = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999999)])
+    esta_guardado = models.BooleanField(default=False)

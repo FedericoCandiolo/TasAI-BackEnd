@@ -34,12 +34,12 @@ User = get_user_model()
 class RegistroUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'password')
+        fields = ('username', 'password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         user = User(
-            email=validated_data['email'],
+            # email=validated_data['email'],
             username=validated_data['username']
         )
         user.set_password(validated_data['password'])
@@ -69,3 +69,11 @@ class InicioSesionSerializer(serializers.Serializer):
 
 class IdPlanSerializer(serializers.Serializer):
     id_plan = serializers.IntegerField()
+
+
+class IdPropiedadSerializer(serializers.Serializer):
+    esta_guardado = serializers.BooleanField()
+
+
+class IdTasacionSerializer(serializers.Serializer):
+    esta_guardado = serializers.BooleanField()
