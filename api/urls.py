@@ -27,5 +27,8 @@ urlpatterns = [
          name='tasacion-propiedad-nueva'),
     # Cambio de Plan
     path('cambio-de-plan/<int:user_id>/', ActualizarPlan.as_view(), name='cambio-de-plan'),
+    path('esta-guardado-propiedad/<int:id_propiedad>/', EstaGuardadoPropiedad.as_view(),
+         name='esta-guardado-propiedad'),
+    path('esta-guardado-tasacion/<int:id_tasacion>/', EstaGuardadoTasacion.as_view(), name='esta-guardado-tasacion'),
 
 ]
