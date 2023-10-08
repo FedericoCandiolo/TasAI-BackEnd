@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import update_session_auth_hash
+from sklearn.ensemble import RandomForestRegressor
+import joblib
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -224,4 +226,7 @@ def calcular_datos_de_tasacion(propiedad):
 
 
 def calcular_valor_tasacion(propiedad):
-    return 300000
+    #var = [200, 6, 3, 0, 4, 1478, 0, 0, 0, 0, 0, 0, 0]
+    modelo = joblib.load("forest_model.joblib")
+    return modelo.predict([propiedad])
+    #return 300000
