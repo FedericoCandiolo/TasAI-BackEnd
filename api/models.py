@@ -1,5 +1,4 @@
 from django.db import models
-from datetime import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -39,22 +38,36 @@ class Propiedad(models.Model):
     calle = models.CharField(max_length=50, null=True)
     numero = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999)])
-    habitaciones = models.IntegerField(default=0,
-                                       validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
+    ambientes = models.IntegerField(default=0,
+                                    validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
     baños = models.IntegerField(default=0,
                                 validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
-    toilets = models.IntegerField(default=0,
-                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
     dormitorios = models.IntegerField(default=0,
                                       validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
-    pisos = models.IntegerField(default=0,
-                                validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
     pileta = models.BooleanField(default=False)
     parrilla = models.BooleanField(default=False)
     jardin = models.BooleanField(default=False)
     latitud = models.DecimalField(max_digits=22, decimal_places=16, null=True)
     longitud = models.DecimalField(max_digits=22, decimal_places=16, null=True)
     esta_guardado = models.BooleanField(default=False)
+
+    metros = models.IntegerField(null=True,
+                                 validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99999)])
+    cochera = models.IntegerField(null=True,
+                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99)])
+    ciudad = models.CharField(max_length=50, null=True)
+    precioxLocalidad = models.IntegerField(null=True,
+                                           validators=[MinValueValidator(limit_value=1),
+                                                       MaxValueValidator(limit_value=9999)])
+
+    toilette = models.BooleanField(default=False)
+    lavadero = models.BooleanField(default=False)
+    AC = models.BooleanField(default=False)
+    balcon = models.BooleanField(default=False)
+    googleMaps = models.CharField(max_length=1000, null=True)
+
+    precio = models.IntegerField(null=True,
+                                 validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=999999)])
 
     # class Meta:
     #     unique_together = ('id_usuario', 'calle', 'numero')
