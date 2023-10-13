@@ -18,6 +18,7 @@ urlpatterns = [
     # Propiedades
     path('propiedad/<int:propiedad_id>/', GetOnePropiedad.as_view(), name='propiedad-detalle'),
     path('propiedades-de-usuario/<int:user_id>/', GetAllPropiedades.as_view(), name='propiedades-de-usuario'),
+    path('propiedades-similares/<int:propiedad_id>/', GetPropiedadesSimilares.as_view(), name='propiedades-similares'),
     path('guardar-propiedad/', GuardarPropiedad.as_view(), name='crear-propiedad'),
     # Tasaciones
     path('tasaciones-de-usuario/<int:user_id>/', TasacionesDeUsuario.as_view(), name='tasaciones-de-usuario'),
