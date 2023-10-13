@@ -64,7 +64,7 @@ class Tasacion(models.Model):
     id = models.Model.pk
     id_propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, default=1)
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, default=1)
-    fecha_tasacion = models.DateTimeField(default=datetime.now())
+    fecha_tasacion = models.DateTimeField(auto_now_add=True)
     precio = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999999)])
     esta_guardado = models.BooleanField(default=False)

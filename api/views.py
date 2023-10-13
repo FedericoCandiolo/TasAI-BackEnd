@@ -1,3 +1,4 @@
+import joblib
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from .serializer import *
@@ -9,7 +10,7 @@ from rest_framework import status
 from django.contrib.auth import update_session_auth_hash
 from sklearn.ensemble import RandomForestRegressor
 import joblib
-
+import math
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -144,6 +145,31 @@ class GetAllPropiedades(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class GetPropiedadesSimilares(APIView):
+    @staticmethod
+    @swagger_auto_schema()
+    def get(request, propiedad_id):
+        propiedad_actual = Propiedad.objects.filter(id=propiedad_id)
+        ultima_tasacion_actual = Tasacion.objects.filter(id_propiedad=propiedad_id).order_by("fecha_tasacion").last()
+
+        propiedades = Propiedad.objects.all()
+        propiedades_filtradas = []
+        # Calcular distancias y agregarlas a las propiedades
+        for propiedad_bd in propiedades:
+            distancia = calcular_distancia(propiedad_actual.get().latitud, propiedad_actual.get().longitud,
+                                           propiedad_bd.latitud, propiedad_bd.longitud)
+
+            ultima_tasacion_bd = Tasacion.objects.filter(id_propiedad=propiedad_bd.id).order_by("fecha_tasacion").last()
+
+            if (0 < distancia <= 150 and
+                    ultima_tasacion_bd.precio * 0.9 <= ultima_tasacion_actual.precio
+                    <= ultima_tasacion_bd.precio * 1.1):
+                propiedades_filtradas.append(propiedad_bd)
+
+        serializer = PropiedadSerializer(propiedades_filtradas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class GetOnePropiedad(APIView):
     @staticmethod
     @swagger_auto_schema()
@@ -188,7 +214,8 @@ class IniciarSesion(APIView):
         if serializer.is_valid():
             user = serializer.validated_data
             token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key, 'id_usuario': user.id}, status=status.HTTP_200_OK)
+            return Response({'token': token.key, 'id_usuario': user.id, 'id_plan': user.id_plan.id},
+                            status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -226,7 +253,19 @@ def calcular_datos_de_tasacion(propiedad):
 
 
 def calcular_valor_tasacion(propiedad):
-    #var = [200, 6, 3, 0, 4, 1478, 0, 0, 0, 0, 0, 0, 0]
+    # var = [200, 6, 3, 0, 4, 1478, 0, 0, 0, 0, 0, 0, 0]
     modelo = joblib.load("forest_model.joblib")
     return modelo.predict([propiedad])
-    #return 300000
+    # return 300000
+
+
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    # Fórmula de distancia haversine
+    radius = 6371  # Radio de la Tierra en kilómetros
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2) + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * (
+            math.sin(dlon / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distancia = radius * c
+    return distancia
