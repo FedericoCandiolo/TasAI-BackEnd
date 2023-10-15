@@ -66,9 +66,6 @@ class Propiedad(models.Model):
     balcon = models.BooleanField(default=False)
     googleMaps = models.CharField(max_length=1000, null=True)
 
-    precio = models.IntegerField(null=True,
-                                 validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=999999)])
-
     # class Meta:
     #     unique_together = ('id_usuario', 'calle', 'numero')
 
