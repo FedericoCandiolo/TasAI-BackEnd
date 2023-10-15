@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from .serializer import *
@@ -10,6 +12,9 @@ from django.contrib.auth import update_session_auth_hash
 from sklearn.ensemble import RandomForestRegressor
 import joblib
 import math
+
+modelo = joblib.load("forest_model.joblib")
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
@@ -107,6 +112,7 @@ class TasacionConPropiedadExistente(APIView):
             propiedad = Propiedad.objects.get(id=propiedad_id)
 
             datos_tasacion = calcular_datos_de_tasacion(propiedad)
+            print(datos_tasacion)
 
             tasacion_serializer = TasacionSerializer(data=datos_tasacion)
             if tasacion_serializer.is_valid():
@@ -151,7 +157,11 @@ class GetPropiedadesSimilares(APIView):
         propiedad_actual = Propiedad.objects.filter(id=propiedad_id)
         ultima_tasacion_actual = Tasacion.objects.filter(id_propiedad=propiedad_id).order_by("fecha_tasacion").last()
 
-        propiedades = Propiedad.objects.all()
+        ultima_tasacion_actual_max = ultima_tasacion_actual.precio * 1.1
+        ultima_tasacion_actual_min = ultima_tasacion_actual.precio * 0.9
+
+        propiedades = Propiedad.objects.filter(tasacion__precio__gte=ultima_tasacion_actual_min,
+                                               tasacion__precio__lte=ultima_tasacion_actual_max)
         propiedades_filtradas = []
         # Calcular distancias y agregarlas a las propiedades
         for propiedad_bd in propiedades:
@@ -160,10 +170,14 @@ class GetPropiedadesSimilares(APIView):
 
             ultima_tasacion_bd = Tasacion.objects.filter(id_propiedad=propiedad_bd.id).order_by("fecha_tasacion").last()
 
-            if (0 < distancia <= 150 and
-                    ultima_tasacion_bd.precio * 0.9 <= ultima_tasacion_actual.precio
-                    <= ultima_tasacion_bd.precio * 1.1):
+            if not ultima_tasacion_bd:
+                break;
+
+            if (0 < distancia <= 600):
                 propiedades_filtradas.append(propiedad_bd)
+
+        if not propiedades_filtradas:
+            return Response({'message': 'No existen propiedades similares'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = PropiedadSerializer(propiedades_filtradas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -246,21 +260,25 @@ def calcular_datos_de_tasacion(propiedad):
         'id_usuario': propiedad.id_usuario_id,
         'fecha_tasacion': datetime.now(),
         'precio': calcular_valor_tasacion(propiedad),
-
     }
     return datos_tasacion
 
 
 def calcular_valor_tasacion(propiedad):
     # var = [200, 6, 3, 0, 4, 1478, 0, 0, 0, 0, 0, 0, 0]
-    modelo = joblib.load("forest_model.joblib")
-    return modelo.predict([propiedad])
+    propiedad_array = [propiedad.metros, propiedad.ambientes, propiedad.baños, propiedad.cochera, propiedad.dormitorios,
+                       propiedad.precioxLocalidad, propiedad.parrilla, propiedad.jardin, propiedad.lavadero,
+                       propiedad.toilette, propiedad.AC, propiedad.balcon, propiedad.pileta]
+
+    predict = modelo.predict([propiedad_array])
+
+    return round(predict[0],0)
     # return 300000
 
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
     # Fórmula de distancia haversine
-    radius = 6371  # Radio de la Tierra en kilómetros
+    radius = 6371000  # Radio de la Tierra en Metros
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = (math.sin(dlat / 2) ** 2) + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * (
