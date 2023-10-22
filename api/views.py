@@ -271,8 +271,9 @@ def calcular_valor_tasacion(propiedad):
                        propiedad.toilette, propiedad.AC, propiedad.balcon, propiedad.pileta]
 
     predict = modelo.predict([propiedad_array])
-
-    return round(predict[0],0)
+    predict = int(predict/1000)*1000
+    return predict
+    #return round(predict[0],0)
     # return 300000
 
 
