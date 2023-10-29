@@ -12,6 +12,7 @@ from django.contrib.auth import update_session_auth_hash
 from sklearn.ensemble import RandomForestRegressor
 import joblib
 import math
+from operator import itemgetter
 
 modelo = joblib.load("forest_model.joblib")
 
@@ -163,6 +164,7 @@ class GetPropiedadesSimilares(APIView):
         propiedades = Propiedad.objects.filter(tasacion__precio__gte=ultima_tasacion_actual_min,
                                                tasacion__precio__lte=ultima_tasacion_actual_max)
         propiedades_filtradas = []
+        distancias_propiedades = []
         # Calcular distancias y agregarlas a las propiedades
         for propiedad_bd in propiedades:
             distancia = calcular_distancia(propiedad_actual.get().latitud, propiedad_actual.get().longitud,
@@ -173,13 +175,19 @@ class GetPropiedadesSimilares(APIView):
             if not ultima_tasacion_bd:
                 break;
 
-            if (0 < distancia <= 600):
+            if 0 < distancia <= 1000:
                 propiedades_filtradas.append(propiedad_bd)
+                distancias_propiedades.append(round(distancia))
 
         if not propiedades_filtradas:
             return Response({'message': 'No existen propiedades similares'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PropiedadSerializer(propiedades_filtradas, many=True)
+        # Ordenar las propiedades y las distancias juntas
+        propiedades_distancias_ordenadas = sorted(zip(propiedades_filtradas, distancias_propiedades), key=itemgetter(1))
+        propiedades_ordenadas, distancias_ordenadas = zip(*propiedades_distancias_ordenadas)
+
+        serializer = PropiedadSerializer(propiedades_ordenadas, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -271,8 +279,9 @@ def calcular_valor_tasacion(propiedad):
                        propiedad.toilette, propiedad.AC, propiedad.balcon, propiedad.pileta]
 
     predict = modelo.predict([propiedad_array])
-
-    return round(predict[0],0)
+    predict = int(predict/1000)*1000
+    return predict
+    #return round(predict[0],0)
     # return 300000
 
 
