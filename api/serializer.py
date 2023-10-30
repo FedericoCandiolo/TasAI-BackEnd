@@ -22,6 +22,12 @@ class PropiedadSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class PrecioXlocalidadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrecioXLocalidad
+        fields = '__all__'
+
+
 class TasacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tasacion

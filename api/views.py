@@ -274,15 +274,21 @@ def calcular_datos_de_tasacion(propiedad):
 
 def calcular_valor_tasacion(propiedad):
     # var = [200, 6, 3, 0, 4, 1478, 0, 0, 0, 0, 0, 0, 0]
+
+    precio_x_localidad_actual = PrecioXLocalidad.objects.get(ciudad=propiedad.ciudad)
+    if precio_x_localidad_actual:
+        precio = precio_x_localidad_actual.precioxLocalidad
+    else:
+        precio = 1500
+
     propiedad_array = [propiedad.metros, propiedad.ambientes, propiedad.baños, propiedad.cochera, propiedad.dormitorios,
-                       propiedad.precioxLocalidad, propiedad.parrilla, propiedad.jardin, propiedad.lavadero,
-                       propiedad.toilette, propiedad.AC, propiedad.balcon, propiedad.pileta]
+                       precio, propiedad.parrilla, propiedad.jardin,
+                       propiedad.lavadero, propiedad.toilette, propiedad.AC, propiedad.balcon, propiedad.pileta]
 
     predict = modelo.predict([propiedad_array])
-    predict = int(predict/1000)*1000
+    predict = int(predict / 1000) * 1000
     return predict
-    #return round(predict[0],0)
-    # return 300000
+
 
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
