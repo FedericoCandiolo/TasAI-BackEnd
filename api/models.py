@@ -8,7 +8,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 class Plan(models.Model):
     id = models.Model.pk
-    nombre_plan = models.CharField(max_length=20, null=True)
+    nombre_plan = models.TextField(max_length=20, null=True)
     precio = models.IntegerField(default=1000,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999999)])
     tasaciones_maximas = models.IntegerField(default=50, validators=[MinValueValidator(limit_value=1),
@@ -20,7 +20,7 @@ class Plan(models.Model):
 
 class Usuario(AbstractUser):
     id = models.Model.pk
-    email = models.CharField(max_length=50, null=True)
+    email = models.TextField(max_length=50, null=True)
     estado = models.BooleanField(default=True)  # Activado = 1, Bloqueado = 0
     id_plan = models.ForeignKey(Plan, on_delete=models.CASCADE, default=1)  # id_plan
     tasaciones_realizadas = models.IntegerField(default=0, validators=[MinValueValidator(limit_value=0),
@@ -35,7 +35,7 @@ class Usuario(AbstractUser):
 class Propiedad(models.Model):
     id = models.Model.pk
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, default=1)
-    calle = models.CharField(max_length=50, null=True)
+    calle = models.TextField(max_length=50, null=True)
     numero = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999)])
     ambientes = models.IntegerField(default=0,
@@ -55,16 +55,11 @@ class Propiedad(models.Model):
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99999)])
     cochera = models.IntegerField(null=True,
                                   validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99)])
-    ciudad = models.CharField(max_length=50, null=True)
-    precioxLocalidad = models.IntegerField(null=True,
-                                           validators=[MinValueValidator(limit_value=1),
-                                                       MaxValueValidator(limit_value=9999)])
-
+    ciudad = models.TextField(max_length=50, null=True)
     toilette = models.BooleanField(default=False)
     lavadero = models.BooleanField(default=False)
     AC = models.BooleanField(default=False)
     balcon = models.BooleanField(default=False)
-    googleMaps = models.CharField(max_length=1000, null=True)
 
     # class Meta:
     #     unique_together = ('id_usuario', 'calle', 'numero')
@@ -78,3 +73,11 @@ class Tasacion(models.Model):
     precio = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999999)])
     esta_guardado = models.BooleanField(default=False)
+
+
+class PrecioXLocalidad(models.Model):
+    id = models.Model.pk
+    ciudad = models.TextField(max_length=50, null=True)
+    precioxLocalidad = models.IntegerField(null=True,
+                                           validators=[MinValueValidator(limit_value=1),
+                                                       MaxValueValidator(limit_value=9999)])
