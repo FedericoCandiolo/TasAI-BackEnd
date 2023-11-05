@@ -40,12 +40,12 @@ User = get_user_model()
 class RegistroUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'password')
+        fields = ('username', 'email', 'password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         user = User(
-            # email=validated_data['email'],
+            email=validated_data['email'],
             username=validated_data['username']
         )
         user.set_password(validated_data['password'])
@@ -83,3 +83,20 @@ class IdPropiedadSerializer(serializers.Serializer):
 
 class IdTasacionSerializer(serializers.Serializer):
     esta_guardado = serializers.BooleanField()
+
+
+class PropiedadConPrecioSerializer(serializers.ModelSerializer):
+    precio = serializers.IntegerField()
+
+    class Meta:
+        model = Propiedad
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        # Obtenemos la representación de los datos según el serializer base
+        representation = super(PropiedadConPrecioSerializer, self).to_representation(instance)
+
+        # Agregamos el campo extra al final de la representación
+        representation['precio'] = self.context.get('precio', 0)
+
+        return representation

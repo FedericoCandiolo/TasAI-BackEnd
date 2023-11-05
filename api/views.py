@@ -13,6 +13,8 @@ from sklearn.ensemble import RandomForestRegressor
 import joblib
 import math
 from operator import itemgetter
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
 modelo = joblib.load("forest_model.joblib")
 
@@ -90,6 +92,23 @@ class TasacionConPropiedadNueva(APIView):
         datos_propiedad = request.data
 
         propiedad_serializer = PropiedadSerializer(data=datos_propiedad)
+
+        id_usuario = datos_propiedad.get('id_usuario')
+
+        guardados_actuales = Propiedad.objects.filter(id_usuario_id=id_usuario).count()
+        tasaciones_actuales = Tasacion.objects.filter(id_usuario_id=id_usuario).count()
+
+        usuario = Usuario.objects.get(id=id_usuario)
+        plan = Plan.objects.filter(id=usuario.id_plan.id)
+
+        tasaciones_plan = plan.get().tasaciones_maximas
+        guardados_plan = plan.get().guardados_maximos
+
+        if guardados_actuales > guardados_plan:
+            return Response({'message': 'Guardados maximos de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        if tasaciones_actuales > tasaciones_plan:
+            return Response({'message': 'Tasaciones maximas de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
         if propiedad_serializer.is_valid():
             propiedad = propiedad_serializer.save()
         else:
@@ -109,11 +128,24 @@ class TasacionConPropiedadExistente(APIView):
     @staticmethod
     @swagger_auto_schema()
     def post(request, propiedad_id):
+
         try:
             propiedad = Propiedad.objects.get(id=propiedad_id)
 
+            id_usuario = propiedad.id_usuario_id
+
+            tasaciones_actuales = Tasacion.objects.filter(id_usuario_id=id_usuario).count()
+
+            usuario = Usuario.objects.get(id=id_usuario)
+            plan = Plan.objects.filter(id=usuario.id_plan.id)
+
+            tasaciones_plan = plan.get().tasaciones_maximas
+
+            if tasaciones_actuales > tasaciones_plan:
+                return Response({'message': 'Tasaciones maximas de plan alcanzadas'},
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+
             datos_tasacion = calcular_datos_de_tasacion(propiedad)
-            print(datos_tasacion)
 
             tasacion_serializer = TasacionSerializer(data=datos_tasacion)
             if tasacion_serializer.is_valid():
@@ -132,8 +164,20 @@ class GuardarPropiedad(APIView):
     def post(request):
 
         datos_propiedad = request.data
-
         propiedad_serializer = PropiedadSerializer(data=datos_propiedad)
+
+        id_usuario = datos_propiedad.get('id_usuario')
+
+        guardados_actuales = Propiedad.objects.filter(id_usuario_id=id_usuario).count()
+
+        usuario = Usuario.objects.get(id=id_usuario)
+        plan = Plan.objects.filter(id=usuario.id_plan.id)
+
+        guardados_plan = plan.get().guardados_maximos
+
+        if guardados_actuales > guardados_plan:
+            return Response({'message': 'Guardados maximos de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
         if propiedad_serializer.is_valid():
             propiedad_serializer.save()
             return Response(propiedad_serializer.data, status=status.HTTP_201_CREATED)
@@ -152,14 +196,15 @@ class GetAllPropiedades(APIView):
 
 
 class GetPropiedadesSimilares(APIView):
+
     @staticmethod
     @swagger_auto_schema()
     def get(request, propiedad_id):
         propiedad_actual = Propiedad.objects.filter(id=propiedad_id)
         ultima_tasacion_actual = Tasacion.objects.filter(id_propiedad=propiedad_id).order_by("fecha_tasacion").last()
 
-        ultima_tasacion_actual_max = ultima_tasacion_actual.precio * 1.1
-        ultima_tasacion_actual_min = ultima_tasacion_actual.precio * 0.9
+        ultima_tasacion_actual_max = ultima_tasacion_actual.precio * 1.2
+        ultima_tasacion_actual_min = ultima_tasacion_actual.precio * 0.8
 
         propiedades = Propiedad.objects.filter(tasacion__precio__gte=ultima_tasacion_actual_min,
                                                tasacion__precio__lte=ultima_tasacion_actual_max)
@@ -175,8 +220,13 @@ class GetPropiedadesSimilares(APIView):
             if not ultima_tasacion_bd:
                 break;
 
-            if 0 < distancia <= 1000:
-                propiedades_filtradas.append(propiedad_bd)
+            propiedad_precio = armar_propiedad_precio(propiedad_bd, ultima_tasacion_bd.precio)
+
+            serializer = PropiedadConPrecioSerializer(propiedad_precio,
+                                                      context={'precio': ultima_tasacion_bd.precio})
+
+            if 0 < distancia <= 2000:
+                propiedades_filtradas.append(serializer.data)
                 distancias_propiedades.append(round(distancia))
 
         if not propiedades_filtradas:
@@ -186,9 +236,7 @@ class GetPropiedadesSimilares(APIView):
         propiedades_distancias_ordenadas = sorted(zip(propiedades_filtradas, distancias_propiedades), key=itemgetter(1))
         propiedades_ordenadas, distancias_ordenadas = zip(*propiedades_distancias_ordenadas)
 
-        serializer = PropiedadSerializer(propiedades_ordenadas, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(propiedades_ordenadas, status=status.HTTP_200_OK)
 
 
 class GetOnePropiedad(APIView):
@@ -262,6 +310,34 @@ class CambiarContraseña(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CambioContraseñaMail(APIView):
+    @staticmethod
+    @swagger_auto_schema()
+    def post(request, usuario_id):
+
+        try:
+            usuario = Usuario.objects.get(id=usuario_id)
+            nueva_contrasena = get_random_string(length=15)  # Genera una nueva contraseña
+
+            # Asigna la nueva contraseña al usuario
+            usuario.set_password(nueva_contrasena)
+            usuario.save()
+
+            # Envia la nueva contraseña por correo
+            send_mail(
+                'Nueva contraseña',
+                f'Tu nueva contraseña es: {nueva_contrasena}',
+                'tasai.noreply@gmail.com',
+                [usuario.email],
+                fail_silently=False,
+            )
+
+            return Response({'message': 'Se ha generado una nueva contraseña y enviado al correo del usuario.'},
+                            status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'El usuario no existe'}, status=status.HTTP_404_NOT_FOUND)
+
+
 def calcular_datos_de_tasacion(propiedad):
     datos_tasacion = {
         'id_propiedad': propiedad.id,
@@ -290,7 +366,6 @@ def calcular_valor_tasacion(propiedad):
     return predict
 
 
-
 def calcular_distancia(lat1, lon1, lat2, lon2):
     # Fórmula de distancia haversine
     radius = 6371000  # Radio de la Tierra en Metros
@@ -301,3 +376,31 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distancia = radius * c
     return distancia
+
+
+def armar_propiedad_precio(propiedad, precio):
+    propiedad_precio = {
+        'id': propiedad.id,
+        'id_usuario': propiedad.id_usuario,
+        'calle': propiedad.calle,
+        'numero': propiedad.numero,
+        'ambientes': propiedad.ambientes,
+        'baños': propiedad.baños,
+        'dormitorios': propiedad.dormitorios,
+        'pileta': propiedad.pileta,
+        'parrilla': propiedad.parrilla,
+        'jardin': propiedad.jardin,
+        'latitud': propiedad.latitud,
+        'longitud': propiedad.longitud,
+        'esta_guardado': propiedad.esta_guardado,
+        'metros': propiedad.metros,
+        'cochera': propiedad.cochera,
+        'ciudad': propiedad.ciudad,
+        'toilette': propiedad.toilette,
+        'lavadero': propiedad.lavadero,
+        'AC': propiedad.AC,
+        'balcon': propiedad.balcon,
+        'precio': precio
+    }
+
+    return propiedad_precio
