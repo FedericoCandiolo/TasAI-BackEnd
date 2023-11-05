@@ -37,13 +37,13 @@ class Propiedad(models.Model):
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, default=1)
     calle = models.TextField(max_length=50, null=True)
     numero = models.IntegerField(null=True,
-                                 validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=9999)])
+                                 validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=9999)])
     ambientes = models.IntegerField(default=0,
-                                    validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
+                                    validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=20)])
     baños = models.IntegerField(default=0,
-                                validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
+                                validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=20)])
     dormitorios = models.IntegerField(default=0,
-                                      validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=20)])
+                                      validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=20)])
     pileta = models.BooleanField(default=False)
     parrilla = models.BooleanField(default=False)
     jardin = models.BooleanField(default=False)
@@ -54,7 +54,7 @@ class Propiedad(models.Model):
     metros = models.IntegerField(null=True,
                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99999)])
     cochera = models.IntegerField(null=True,
-                                  validators=[MinValueValidator(limit_value=1), MaxValueValidator(limit_value=99)])
+                                  validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=99)])
     ciudad = models.TextField(max_length=50, null=True)
     toilette = models.BooleanField(default=False)
     lavadero = models.BooleanField(default=False)
