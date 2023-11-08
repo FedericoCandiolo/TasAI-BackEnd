@@ -15,7 +15,7 @@ urlpatterns = [
     path('cambiar-contraseña/', CambiarContraseña.as_view(), name='cambiar_contraseña'),
     path('registro/', RegistroUsuario.as_view(), name='registro_usuario'),
     path('inicio-sesion/', IniciarSesion.as_view(), name='inicio_sesion'),
-    path('contraseña-mail/<int:usuario_id>/', CambioContraseñaMail.as_view(), name='contraseña-mail'),
+    path('contraseña-mail/<str:usuario_name>/', CambioContraseñaMail.as_view(), name='contraseña-mail'),
     # Propiedades
     path('propiedad/<int:propiedad_id>/', GetOnePropiedad.as_view(), name='propiedad-detalle'),
     path('propiedades-de-usuario/<int:user_id>/', GetAllPropiedades.as_view(), name='propiedades-de-usuario'),

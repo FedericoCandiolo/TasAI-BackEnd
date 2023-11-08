@@ -313,10 +313,10 @@ class CambiarContraseña(APIView):
 class CambioContraseñaMail(APIView):
     @staticmethod
     @swagger_auto_schema()
-    def post(request, usuario_id):
+    def post(request, usuario_name):
 
         try:
-            usuario = Usuario.objects.get(id=usuario_id)
+            usuario = Usuario.objects.get(username=usuario_name)
             nueva_contrasena = get_random_string(length=15)  # Genera una nueva contraseña
 
             # Asigna la nueva contraseña al usuario
