@@ -290,10 +290,11 @@ class IniciarSesion(APIView):
 
 class CambiarContraseña(APIView):
     @swagger_auto_schema(request_body=CambiarContraseñaSerializer)
-    def post(self, request):
+    def post(self, request, user_id):
         serializer = CambiarContraseñaSerializer(data=request.data)
         if serializer.is_valid():
-            user = self.request.user
+            user = Usuario.objects.get(id=user_id)
+
             contraseña_actual = serializer.validated_data['contraseña_actual']
             nueva_contraseña = serializer.validated_data['nueva_contraseña']
             confirmar_contraseña = serializer.validated_data['confirmar_contraseña']
