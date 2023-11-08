@@ -12,7 +12,7 @@ router.register(r'tasacion', views.TasacionViewSet)
 urlpatterns = [
     # path('api/', include(router.urls)),
     # Registro/Login/Pass
-    path('cambiar-contraseña/', CambiarContraseña.as_view(), name='cambiar_contraseña'),
+    path('cambiar-contraseña/<int:user_id>/', CambiarContraseña.as_view(), name='cambiar_contraseña'),
     path('registro/', RegistroUsuario.as_view(), name='registro_usuario'),
     path('inicio-sesion/', IniciarSesion.as_view(), name='inicio_sesion'),
     path('contraseña-mail/<str:usuario_name>/', CambioContraseñaMail.as_view(), name='contraseña-mail'),
