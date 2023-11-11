@@ -154,7 +154,7 @@ class TasacionConPropiedadExistente(APIView):
             tasaciones_plan = plan.get().tasaciones_maximas
 
             if tasaciones_actuales >= tasaciones_plan:
-                return Response({'message': 'Tasaciones maximas de plan alcanzadas'},
+                return Response({'message': 'Tasaciones máximas de plan alcanzadas'},
                                 status=status.HTTP_406_NOT_ACCEPTABLE)
 
             datos_tasacion = calcular_datos_de_tasacion(propiedad)
