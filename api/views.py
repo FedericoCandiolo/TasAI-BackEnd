@@ -74,9 +74,22 @@ class EstaGuardadoTasacion(APIView):
     @staticmethod
     @swagger_auto_schema(request_body=IdTasacionSerializer)
     def patch(request, id_tasacion):
+        esta_guardado = request.data.get('esta_guardado')
+        if(esta_guardado is True):
+
+            tasaciones_actuales_guardadas = Tasacion.objects.filter(id_usuario_id=id_usuario, esta_guardado=1).count()
+
+            usuario = Usuario.objects.get(id=id_usuario)
+            plan = Plan.objects.filter(id=usuario.id_plan.id)
+
+            guardados_plan = plan.get().guardados_maximos
+
+            if tasaciones_actuales_guardadas >= guardados_plan:
+                return Response({'message': 'Tasaciones máximas de plan alcanzadas'},
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
+
         try:
             tasacion = Tasacion.objects.get(id=id_tasacion)
-            esta_guardado = request.data.get('esta_guardado')
             tasacion.esta_guardado = esta_guardado
             tasacion.save()
             return Response(status=status.HTTP_200_OK)
@@ -95,19 +108,15 @@ class TasacionConPropiedadNueva(APIView):
 
         id_usuario = datos_propiedad.get('id_usuario')
 
-        guardados_actuales = Propiedad.objects.filter(id_usuario_id=id_usuario).count()
         tasaciones_actuales = Tasacion.objects.filter(id_usuario_id=id_usuario).count()
 
         usuario = Usuario.objects.get(id=id_usuario)
         plan = Plan.objects.filter(id=usuario.id_plan.id)
 
         tasaciones_plan = plan.get().tasaciones_maximas
-        guardados_plan = plan.get().guardados_maximos
 
-        if guardados_actuales > guardados_plan:
-            return Response({'message': 'Guardados maximos de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        if tasaciones_actuales > tasaciones_plan:
-            return Response({'message': 'Tasaciones maximas de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        if tasaciones_actuales >= tasaciones_plan:
+            return Response({'message': 'Tasaciones máximas de plan alcanzadas'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         if propiedad_serializer.is_valid():
             propiedad = propiedad_serializer.save()
@@ -141,7 +150,7 @@ class TasacionConPropiedadExistente(APIView):
 
             tasaciones_plan = plan.get().tasaciones_maximas
 
-            if tasaciones_actuales > tasaciones_plan:
+            if tasaciones_actuales >= tasaciones_plan:
                 return Response({'message': 'Tasaciones maximas de plan alcanzadas'},
                                 status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -164,20 +173,8 @@ class GuardarPropiedad(APIView):
     def post(request):
 
         datos_propiedad = request.data
+
         propiedad_serializer = PropiedadSerializer(data=datos_propiedad)
-
-        id_usuario = datos_propiedad.get('id_usuario')
-
-        guardados_actuales = Propiedad.objects.filter(id_usuario_id=id_usuario).count()
-
-        usuario = Usuario.objects.get(id=id_usuario)
-        plan = Plan.objects.filter(id=usuario.id_plan.id)
-
-        guardados_plan = plan.get().guardados_maximos
-
-        if guardados_actuales > guardados_plan:
-            return Response({'message': 'Guardados maximos de plan alcanzados'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-
         if propiedad_serializer.is_valid():
             propiedad_serializer.save()
             return Response(propiedad_serializer.data, status=status.HTTP_201_CREATED)
