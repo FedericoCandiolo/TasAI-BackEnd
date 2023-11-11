@@ -75,6 +75,9 @@ class EstaGuardadoTasacion(APIView):
     @swagger_auto_schema(request_body=IdTasacionSerializer)
     def patch(request, id_tasacion):
         esta_guardado = request.data.get('esta_guardado')
+        tasacion = Tasacion.objects.get(id=id_tasacion)
+        id_usuario = tasacion.id_usuario_id
+
         if(esta_guardado is True):
 
             tasaciones_actuales_guardadas = Tasacion.objects.filter(id_usuario_id=id_usuario, esta_guardado=1).count()
@@ -85,11 +88,11 @@ class EstaGuardadoTasacion(APIView):
             guardados_plan = plan.get().guardados_maximos
 
             if tasaciones_actuales_guardadas >= guardados_plan:
-                return Response({'message': 'Tasaciones máximas de plan alcanzadas'},
+                return Response({'message': 'Guardados máximos de plan alcanzados'},
                                 status=status.HTTP_406_NOT_ACCEPTABLE)
 
         try:
-            tasacion = Tasacion.objects.get(id=id_tasacion)
+
             tasacion.esta_guardado = esta_guardado
             tasacion.save()
             return Response(status=status.HTTP_200_OK)
