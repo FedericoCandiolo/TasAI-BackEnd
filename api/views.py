@@ -15,6 +15,7 @@ import math
 from operator import itemgetter
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
+from django.utils.html import strip_tags
 
 modelo = joblib.load("forest_model.joblib")
 
@@ -78,7 +79,7 @@ class EstaGuardadoTasacion(APIView):
         tasacion = Tasacion.objects.get(id=id_tasacion)
         id_usuario = tasacion.id_usuario_id
 
-        if(esta_guardado is True):
+        if (esta_guardado is True):
 
             tasaciones_actuales_guardadas = Tasacion.objects.filter(id_usuario_id=id_usuario, esta_guardado=1).count()
 
@@ -324,14 +325,18 @@ class CambioContraseñaMail(APIView):
             usuario.set_password(nueva_contrasena)
             usuario.save()
 
-            # Envia la nueva contraseña por correo
+            # Enviar el correo electrónico con el enlace enmascarado
+            email_body = f'Tu nueva contraseña es: {nueva_contrasena}<br><br>Pagina de Login: <a href="http://localhost:3000/" title="Login">Home</a>.'
+
             send_mail(
                 'Nueva contraseña',
-                f'Tu nueva contraseña es: {nueva_contrasena}',
+                strip_tags(email_body),
                 'tasai.noreply@gmail.com',
                 [usuario.email],
+                html_message=email_body,
                 fail_silently=False,
             )
+
 
             return Response({'message': 'Se ha generado una nueva contraseña y enviado al correo del usuario.'},
                             status=status.HTTP_200_OK)
